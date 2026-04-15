@@ -1,0 +1,19 @@
+{
+  "name": "alarm-security-nlp",
+  "version": "1.0.0",
+  "description": "Natural language security control system",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "test": "pnpm --filter backend test",
+    "test:coverage": "pnpm --filter backend test:coverage",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1"
+}
