@@ -11,6 +11,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@nlpjs/lang-en": "5.0.0-alpha.5",
+    "@nlpjs/nlp": "5.0.0-alpha.5",
+    "chrono-node": "^2.9.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "pino": "^9.7.0",

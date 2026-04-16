@@ -10,6 +10,15 @@ importers:
 
   backend:
     dependencies:
+      '@nlpjs/lang-en':
+        specifier: 5.0.0-alpha.5
+        version: 5.0.0-alpha.5
+      '@nlpjs/nlp':
+        specifier: 5.0.0-alpha.5
+        version: 5.0.0-alpha.5
+      chrono-node:
+        specifier: ^2.9.0
+        version: 2.9.0
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -453,6 +462,42 @@ packages:
 
   '@napi-rs/wasm-runtime@1.0.7':
     resolution: {integrity: sha512-SeDnOO0Tk7Okiq6DbXmmBODgOAb9dp9gjlphokTUxmt8U3liIP1ZsozBahH69j/RJv+Rfs6IwUKHTgQYJ/HBAw==}
+
+  '@nlpjs/core@5.0.0-alpha.5':
+    resolution: {integrity: sha512-6KER6Jsy/KLVNor2isRsYV5XjVtYVaYLLqEmQt69Nmw2tIYyzzhzPxZPmOaU++OWfiUaZWGMgNueJHAmK6sApw==}
+
+  '@nlpjs/lang-en-min@5.0.0-alpha.5':
+    resolution: {integrity: sha512-a3k8VrJ6jOp9XSoz25kJR1N/kMaGjzb/B7dS1S5bqCvGY9sm+Xr4C9PCTZwEP4WgD2QZLCLEauiiKXM59zxwDQ==}
+
+  '@nlpjs/lang-en@5.0.0-alpha.5':
+    resolution: {integrity: sha512-wQJqfsl4vNKNkgG5IX8pWvgtmBIX81vAjOBrvbipnqy9f63PzjHo1w2IPBaAKRWMgRfzbH23IeIfizEjTweP2w==}
+
+  '@nlpjs/language-min@5.0.0-alpha.5':
+    resolution: {integrity: sha512-O4tnPFqiSxK2Ukv0WD+NhviaBSjW8xq2GJFzQo3dKEief0JJQVK0McYzkahgyInhy0J/q4z9KGFzGs5VEVgwfA==}
+
+  '@nlpjs/ner@5.0.0-alpha.5':
+    resolution: {integrity: sha512-abtdWNXqEmWmRwRFCLnv72g2wMgcmWcEes6kL895GmevS/NseOE8j87ufTwPuk77Fgcga/z794eQaFU7Wn2HTA==}
+
+  '@nlpjs/neural@5.0.0-alpha.5':
+    resolution: {integrity: sha512-QayWLhzfGardmIwJXEK7ojb6O2GCwJl5CQhwy8VI/zZtCvZ/l7ABKI0/tU0qhbPXWPg3v0PR3k5yLSBcX4XSPg==}
+
+  '@nlpjs/nlg@5.0.0-alpha.5':
+    resolution: {integrity: sha512-+gaNb1dcqzocR3CNdnvk+Tt5eAnWXCrnWmW99i6KB8FaKSMi8pzPmR1fZwCGVqhqlSRWAGLSRpEMpZ2qQuKjDQ==}
+
+  '@nlpjs/nlp@5.0.0-alpha.5':
+    resolution: {integrity: sha512-K/MfazhTOWNjdn9Xy2PydYtziPHN5ZHFBfOKa5acWt26fdGiORBDL7ee2UqfM+Y1poZ9qaqbDHRi0O/R6YwpkA==}
+
+  '@nlpjs/nlu@5.0.0-alpha.5':
+    resolution: {integrity: sha512-3DwDgGlpusuFXa3+8YFzm8BAzFT49PzRolUJDDOoMMhrF5s+J21XmtWPssFZjNfHjuqjssQRx4k+sJ9/QGfzXQ==}
+
+  '@nlpjs/sentiment@5.0.0-alpha.5':
+    resolution: {integrity: sha512-yNk3lnZ7g1MFCnrm9TcZnFL1sK4IsBkBXzyw7gygG8lTlNZgPsumODo449fqWc1SHN2sz1K/dmSslBb6Iq2IcA==}
+
+  '@nlpjs/similarity@5.0.0-alpha.5':
+    resolution: {integrity: sha512-xgEjMXnwieZTXV/cRHnsFL72s6EvFxohOU2jWhXMgtaiV6bpglnJJTzvtFl8ZeLCzqfZqY3pfGmsvtWaR3vujw==}
+
+  '@nlpjs/slot@5.0.0-alpha.5':
+    resolution: {integrity: sha512-weia63mK3NXpUlkzVYx9fmv+SiAtVNrX8KC3wOqZtJl+Krg/Feo+xdmKPDT/VDtjz+v+je/4Xj85oAfPbHXepA==}
 
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
@@ -990,6 +1035,10 @@ packages:
   check-error@2.1.3:
     resolution: {integrity: sha512-PAJdDJusoxnwm1VwW07VWwUN1sl7smmC3OKggvndJFadxxDRyFJBX/ggnu/KE4kQAB7a3Dp8f/YXC1FlUprWmA==}
     engines: {node: '>= 16'}
+
+  chrono-node@2.9.0:
+    resolution: {integrity: sha512-glI4YY2Jy6JII5l3d5FN6rcrIbKSQqKPhWsIRYPK2IK8Mm4Q1ZZFdYIaDqglUNf7gNwG+kWIzTn0omzzE0VkvQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -2398,6 +2447,57 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
+  '@nlpjs/core@5.0.0-alpha.5': {}
+
+  '@nlpjs/lang-en-min@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+
+  '@nlpjs/lang-en@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+      '@nlpjs/lang-en-min': 5.0.0-alpha.5
+
+  '@nlpjs/language-min@5.0.0-alpha.5': {}
+
+  '@nlpjs/ner@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+      '@nlpjs/language-min': 5.0.0-alpha.5
+      '@nlpjs/similarity': 5.0.0-alpha.5
+
+  '@nlpjs/neural@5.0.0-alpha.5': {}
+
+  '@nlpjs/nlg@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+
+  '@nlpjs/nlp@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+      '@nlpjs/ner': 5.0.0-alpha.5
+      '@nlpjs/nlg': 5.0.0-alpha.5
+      '@nlpjs/nlu': 5.0.0-alpha.5
+      '@nlpjs/sentiment': 5.0.0-alpha.5
+      '@nlpjs/slot': 5.0.0-alpha.5
+
+  '@nlpjs/nlu@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+      '@nlpjs/language-min': 5.0.0-alpha.5
+      '@nlpjs/neural': 5.0.0-alpha.5
+      '@nlpjs/similarity': 5.0.0-alpha.5
+
+  '@nlpjs/sentiment@5.0.0-alpha.5':
+    dependencies:
+      '@nlpjs/core': 5.0.0-alpha.5
+      '@nlpjs/language-min': 5.0.0-alpha.5
+      '@nlpjs/neural': 5.0.0-alpha.5
+
+  '@nlpjs/similarity@5.0.0-alpha.5': {}
+
+  '@nlpjs/slot@5.0.0-alpha.5': {}
+
   '@noble/hashes@1.8.0': {}
 
   '@paralleldrive/cuid2@2.3.1':
@@ -2940,6 +3040,8 @@ snapshots:
       supports-color: 7.2.0
 
   check-error@2.1.3: {}
+
+  chrono-node@2.9.0: {}
 
   color-convert@2.0.1:
     dependencies:
