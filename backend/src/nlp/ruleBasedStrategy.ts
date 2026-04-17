@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import * as chrono from 'chrono-node';
-import { Intent, type ArmMode, type ParsedCommand } from '../types.js';
+import { Intent, type ArmMode, type ParsedCommand } from '../shared/types.js';
 import type { NlpStrategy } from './nlpStrategy.js';
 
 // CJS interop for nlp.js (no ESM exports)

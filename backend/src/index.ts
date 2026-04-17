@@ -1,6 +1,6 @@
 import { app, setNlpStrategy } from './app.js';
-import { config } from './config.js';
-import { logger } from './logger.js';
+import { config } from './shared/config.js';
+import { logger } from './shared/logger.js';
 import { createNlpStrategy } from './nlp/nlpFactory.js';
 
 async function start(): Promise<void> {

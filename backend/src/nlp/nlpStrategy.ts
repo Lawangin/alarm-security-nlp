@@ -1,4 +1,4 @@
-import type { ParsedCommand } from '../types.js';
+import type { ParsedCommand } from '../shared/types.js';
 
 export interface NlpStrategy {
   initialize(): Promise<void>;

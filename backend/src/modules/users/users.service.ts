@@ -1,31 +1,10 @@
-import { AppError } from '../middleware/errorHandler.js';
-import { maskPin } from '../logger.js';
-import { ArmMode, SystemState, User } from '../types.js';
+import { AppError } from '../../shared/middleware/errorHandler.js';
+import { maskPin } from '../../shared/logger.js';
+import type { User } from './users.types.js';
 
-let systemState: SystemState = { armed: false, mode: null };
 const users = new Map<string, User>();
 
-const VALID_MODES: ArmMode[] = ['away', 'home', 'stay'];
 const PIN_PATTERN = /^\d{4,6}$/;
-
-export function armSystem(mode: ArmMode = 'away'): SystemState {
-  if (!VALID_MODES.includes(mode)) {
-    throw new AppError(400, 'INVALID_MODE', `Invalid mode "${mode}". Must be one of: ${VALID_MODES.join(', ')}`);
-  }
-  if (systemState.armed) {
-    throw new AppError(409, 'ALREADY_ARMED', `System is already armed in "${systemState.mode}" mode`);
-  }
-  systemState = { armed: true, mode };
-  return { ...systemState };
-}
-
-export function disarmSystem(): SystemState {
-  if (!systemState.armed) {
-    throw new AppError(409, 'ALREADY_DISARMED', 'System is already disarmed');
-  }
-  systemState = { armed: false, mode: null };
-  return { ...systemState };
-}
 
 export function addUser(
   name: string,
@@ -89,11 +68,10 @@ export function listUsers(): Array<Omit<User, 'pin'> & { pin: string }> {
   }));
 }
 
-export function getSystemStatus(): { systemState: SystemState; userCount: number } {
-  return { systemState: { ...systemState }, userCount: users.size };
+export function getUserCount(): number {
+  return users.size;
 }
 
 export function reset(): void {
-  systemState = { armed: false, mode: null };
   users.clear();
 }

@@ -23,17 +23,3 @@ export interface ParsedCommand {
   rawText: string;
   source: 'rule-based' | 'llm' | 'rule-based-fallback';
 }
-
-export interface SystemState {
-  armed: boolean;
-  mode: ArmMode | null;
-}
-
-export interface User {
-  name: string;
-  pin: string;
-  startTime?: string;
-  endTime?: string;
-  permissions: string[];
-  createdAt: string;
-}

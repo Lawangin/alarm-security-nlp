@@ -1,11 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { validateTextInput } from '../middleware/inputValidation.js';
-import { routeCommand } from '../services/commandRouter.js';
-import { nlpStrategy } from '../app.js';
+import { validateTextInput } from '../../shared/middleware/inputValidation.js';
+import { routeCommand } from './commands.service.js';
+import { nlpStrategy } from '../../app.js';
 
 const router: express.Router = express.Router();
 
-// POST /nl/execute — parse natural-language text and execute the resulting command
 router.post('/execute', validateTextInput, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { text } = req.body as { text: string };
@@ -33,4 +32,4 @@ router.post('/execute', validateTextInput, async (req: Request, res: Response, n
   }
 });
 
-export const nlRouter: express.Router = router;
+export const commandsRouter: express.Router = router;

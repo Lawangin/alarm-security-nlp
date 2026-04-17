@@ -1,16 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import * as securityService from '../services/securityService.js';
-import { AppError } from '../middleware/errorHandler.js';
-import { ArmMode } from '../types.js';
+import { AppError } from '../../shared/middleware/errorHandler.js';
+import * as usersService from './users.service.js';
 
 const router: express.Router = express.Router();
-
-// --- Zod schemas ---
-
-const armSchema = z.object({
-  mode: z.enum(['away', 'home', 'stay']).default('away'),
-});
 
 const addUserSchema = z.object({
   name: z.string().min(1),
@@ -29,8 +22,6 @@ const removeUserSchema = z
     message: 'Provide either name or pin',
   });
 
-// --- Helpers ---
-
 function validate<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
   if (!result.success) {
@@ -40,31 +31,10 @@ function validate<T>(schema: z.ZodType<T>, body: unknown): T {
   return result.data;
 }
 
-// --- Routes ---
-
-router.post('/arm-system', (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { mode } = validate(armSchema, req.body);
-    const result = securityService.armSystem(mode as ArmMode);
-    res.json({ success: true, data: result, correlationId: req.correlationId });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/disarm-system', (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = securityService.disarmSystem();
-    res.json({ success: true, data: result, correlationId: req.correlationId });
-  } catch (err) {
-    next(err);
-  }
-});
-
 router.post('/add-user', (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, pin, startTime, endTime, permissions } = validate(addUserSchema, req.body);
-    const user = securityService.addUser(name, pin, startTime, endTime, permissions);
+    const user = usersService.addUser(name, pin, startTime, endTime, permissions);
     res.status(201).json({ success: true, data: user, correlationId: req.correlationId });
   } catch (err) {
     next(err);
@@ -74,7 +44,7 @@ router.post('/add-user', (req: Request, res: Response, next: NextFunction) => {
 router.post('/remove-user', (req: Request, res: Response, next: NextFunction) => {
   try {
     const identifier = validate(removeUserSchema, req.body);
-    securityService.removeUser(identifier);
+    usersService.removeUser(identifier);
     res.json({ success: true, data: { removed: true }, correlationId: req.correlationId });
   } catch (err) {
     next(err);
@@ -83,11 +53,11 @@ router.post('/remove-user', (req: Request, res: Response, next: NextFunction) =>
 
 router.get('/list-users', (req: Request, res: Response, next: NextFunction) => {
   try {
-    const users = securityService.listUsers();
+    const users = usersService.listUsers();
     res.json({ success: true, data: { users }, correlationId: req.correlationId });
   } catch (err) {
     next(err);
   }
 });
 
-export const apiRouter: express.Router = router;
+export const usersRouter: express.Router = router;

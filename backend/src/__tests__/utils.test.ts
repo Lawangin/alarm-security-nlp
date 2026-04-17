@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { maskPin } from '../logger.js';
+import { maskPin } from '../shared/logger.js';
 
 // ---------------------------------------------------------------------------
 // maskPin
@@ -43,10 +43,10 @@ describe('validateTextInput middleware', () => {
     return { req, res, next };
   };
 
-  let validateTextInput: typeof import('../middleware/inputValidation.js').validateTextInput;
+  let validateTextInput: typeof import('../shared/middleware/inputValidation.js').validateTextInput;
 
   beforeEach(async () => {
-    ({ validateTextInput } = await import('../middleware/inputValidation.js'));
+    ({ validateTextInput } = await import('../shared/middleware/inputValidation.js'));
   });
 
   afterEach(() => {

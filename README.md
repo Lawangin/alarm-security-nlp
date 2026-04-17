@@ -6,6 +6,8 @@ A natural language interface for a security system. Type plain English commands 
 
 ## TL;DR
 
+> **API key:** A throwaway Anthropic API key for hybrid/LLM mode has been provided separately via email. Add it to a `.env` file as shown below before starting. Without it the system still runs fully in rule-based mode.
+
 ```bash
 git clone <repo-url>
 cd alarm-security-nlp
@@ -13,9 +15,9 @@ cd alarm-security-nlp
 # Rule-based mode — no API key needed
 docker compose up --build
 
-# Hybrid mode — rule-based + Claude fallback
-cp .env.example .env          # set LLM_API_KEY=your-key
-NLP_STRATEGY=hybrid docker compose up --build
+# Hybrid mode — rule-based + Claude fallback (recommended)
+cp .env.example .env          # paste the provided LLM_API_KEY value
+docker compose up --build
 
 # Verify it's healthy
 curl http://localhost:8080/healthz
@@ -50,15 +52,38 @@ POST /nl/execute { text }
   → { success, data: { input, interpretation, apiCall, result }, correlationId }
 ```
 
-### Backend layers
+### Backend structure
 
-| Layer | Files | Responsibility |
-|---|---|---|
-| Config | `src/config.ts` | Zod-validated env vars, fail-fast on bad config |
-| Middleware | `src/middleware/` | Correlation IDs, request logging, error handling, input validation |
-| Routes | `src/routes/` | REST (`/api/*`) and NL (`/nl/execute`) endpoints |
-| Services | `src/services/` | In-memory state store + command routing |
-| NLP | `src/nlp/` | Strategy implementations (rule-based, LLM, hybrid) |
+The backend follows a **domain-driven design** structure — each domain owns its routes, service, and types together in one module folder:
+
+```
+src/
+  modules/
+    system/               ← arm/disarm
+      system.routes.ts
+      system.service.ts
+      system.types.ts
+    users/                ← add/remove/list
+      users.routes.ts
+      users.service.ts
+      users.types.ts
+    commands/             ← /nl/execute + command routing
+      commands.routes.ts
+      commands.service.ts
+  nlp/                    ← strategy implementations
+    nlpStrategy.ts
+    ruleBasedStrategy.ts
+    llmStrategy.ts
+    hybridStrategy.ts
+    nlpFactory.ts
+  shared/
+    middleware/           ← correlation ID, logging, error handling, validation
+    config.ts
+    logger.ts
+    types.ts              ← only truly shared types (Intent enum, ParsedCommand, etc.)
+```
+
+Adding a new feature (zones, sensors) means adding one folder under `modules/` without touching anything else. Cross-domain imports are explicit — `commands` imports from `system` and `users` — which keeps dependencies visible and prevents hidden coupling.
 
 All state is in-memory — no database. System state and users live in `securityService.ts`.
 
@@ -90,6 +115,10 @@ user input
 ```
 
 ### Switching strategies
+
+**Via the UI** — The frontend shows three strategy buttons (`rule-based`, `hybrid`, `llm`) in the status bar. Click any button to switch strategies at runtime without restarting the server. If no `LLM_API_KEY` is configured, the `hybrid` and `llm` buttons are disabled and only `rule-based` is available.
+
+**Via environment variable** — set before starting the server:
 
 ```bash
 # .env or inline
@@ -286,16 +315,16 @@ cd backend && pnpm vitest run src/__tests__/nlp-rule-based.test.ts
 
 ### Coverage
 
-| Suite | What's tested |
-|---|---|
-| `nlp-rule-based.test.ts` | All intents, entity extraction, chrono-node time parsing, edge cases |
-| `security-service.test.ts` | Arm/disarm, add/remove/list users, PIN validation, duplicates |
-| `utils.test.ts` | PIN masking, input sanitization |
-| `config.test.ts` | Valid defaults, invalid env var combinations |
-| `api.integration.test.ts` | Full REST flows via supertest, error cases, correlation IDs |
-| `nl-execute.integration.test.ts` | Each intent through `/nl/execute`, validation errors |
-| `nlp-llm.test.ts` | Mocked API calls, malformed JSON, network failures |
-| `nlp-hybrid.test.ts` | Confidence routing, LLM fallback, `source` field tracking |
+| Suite | Type | What's tested |
+|---|---|---|
+| `nlp-rule-based.test.ts` | Unit | All intents, entity extraction, chrono-node time parsing, edge cases |
+| `security-service.test.ts` | Unit | Arm/disarm, add/remove/list users, PIN validation, duplicates |
+| `utils.test.ts` | Unit | PIN masking, input sanitization |
+| `config.test.ts` | Unit | Valid defaults, invalid env var combinations |
+| `nlp-llm.test.ts` | Unit | Mocked API calls, malformed JSON, network failures |
+| `nlp-hybrid.test.ts` | Unit | Confidence routing, LLM fallback, `source` field tracking |
+| `api.integration.test.ts` | Integration | Full REST flows via supertest, error cases, correlation IDs |
+| `nl-execute.integration.test.ts` | Integration | Each intent through `/nl/execute`, validation errors |
 
 ---
 
@@ -324,7 +353,7 @@ Copy `.env.example` to `.env` and fill in your API key to use LLM/hybrid mode.
 
 - _Build time_ — An Ollama model pull inside a Docker build downloads gigabytes during the interview. The nlp.js model trains in ~13ms from utterances already in the source code. `docker compose up --build` and the backend is ready in seconds.
 - _Response latency_ — A local LLM adds 1–10 seconds per request depending on the model and hardware. The rule-based classifier runs in under a millisecond.
-- _Accuracy for this domain_ — The security command space is narrow and well-defined: 5 intents, predictable phrasing, structured entities. A rule-based system with good training utterances hits 95–100% on realistic inputs. A general-purpose LLM doesn't give meaningfully better intent accuracy here — it adds complexity, cost, and latency for the same outcome.
+- _Accuracy for this domain_ — The security command space is narrow and well-defined: 5 intents, predictable phrasing, structured entities. A rule-based system with good training utterances hits 95% on realistic inputs. A general-purpose LLM doesn't give meaningfully better intent accuracy here — it adds complexity, cost, and latency for the same outcome.
 
 The hybrid strategy is the most honest architectural answer to this tradeoff: rule-based handles the 95% of commands that are direct and unambiguous in under a millisecond; the LLM fallback handles genuinely ambiguous or conversational phrasing (e.g. _"John is going to be here this weekend, give him access"_) where the flexibility actually earns its cost.
 
@@ -344,7 +373,12 @@ The hybrid strategy is the most honest architectural answer to this tradeoff: ru
 
 - **Persistent storage** — SQLite or PostgreSQL for users and an audit log of all commands.
 - **Authentication** — API keys or JWT on all endpoints; role-based access for admin vs. user operations.
-- **Recurring schedules** — Cron-style access windows ("every weekday 9–5") instead of only contiguous date ranges.
+- **Scheduled arming/disarming** — Natural language commands like _"arm the system at 11pm every night"_ or _"disarm automatically at 7am on weekdays"_ mapped to a cron-style job scheduler. The NLP layer already understands temporal expressions; the missing piece is a persistent job store and a scheduler (e.g. `node-cron`) to execute them.
+- **Recurring access schedules** — Cron-style access windows (_"every weekday 9–5"_, _"every other weekend"_) instead of only contiguous date ranges. Currently rejected with a clear error; the data model and NLP would both need extending.
+- **Bulk user operations** — Commands like _"add users Alice with PIN 1234, Bob with PIN 5678, and Carol with PIN 9012"_ or _"remove all temporary users"_. Would require the NLP layer to return a list of parsed entities rather than a single user per command, and the API to accept arrays.
+- **Zones and sensors** — Arm/disarm individual zones (_"arm just the front door"_, _"disable motion sensor in the garage"_) rather than the whole system. Needs a zone model and zone-aware intents.
+- **Access level permissions** — Distinguish between _arm-only_, _disarm-only_, and _full access_ users rather than defaulting everyone to both. The `permissions` field is already modelled; the NLP just needs training on the phrasing.
+- **Audit log** — Immutable log of every command, parsed intent, and outcome with timestamps and correlation IDs, queryable through the UI.
 - **Streaming UI** — Stream LLM parse results token-by-token so the frontend feels responsive on slow API calls.
 - **Retry + circuit breaker** — Exponential backoff and a circuit breaker around Anthropic SDK calls so transient API outages don't cascade into 500s.
 - **Telemetry** — Track per-strategy latency, LLM escalation rate, and intent distribution to tune the confidence threshold over time.

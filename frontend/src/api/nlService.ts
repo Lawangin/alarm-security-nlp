@@ -22,3 +22,11 @@ export async function fetchHealth(): Promise<HealthzData> {
   const json = await request<{ success: true; data: HealthzData }>('/healthz');
   return json.data;
 }
+
+export async function setNlpStrategy(strategy: string): Promise<void> {
+  await request<{ success: true; data: { nlpStrategy: string } }>('/api/nlp-strategy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ strategy }),
+  });
+}

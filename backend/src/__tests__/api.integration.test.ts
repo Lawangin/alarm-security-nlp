@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
-import { reset } from '../services/securityService.js';
+import { reset as resetSystem } from '../modules/system/system.service.js';
+import { reset as resetUsers } from '../modules/users/users.service.js';
 
 beforeEach(() => {
-  reset();
+  resetSystem();
+  resetUsers();
 });
 
 // ---------------------------------------------------------------------------

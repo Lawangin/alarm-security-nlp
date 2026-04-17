@@ -2,16 +2,21 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   armSystem,
   disarmSystem,
+  getSystemState,
+  reset as resetSystem,
+} from '../modules/system/system.service.js';
+import {
   addUser,
   removeUser,
   listUsers,
-  getSystemStatus,
-  reset,
-} from '../services/securityService.js';
+  getUserCount,
+  reset as resetUsers,
+} from '../modules/users/users.service.js';
 
 describe('securityService', () => {
   beforeEach(() => {
-    reset();
+    resetSystem();
+    resetUsers();
   });
 
   // ---------------------------------------------------------------------------
@@ -194,14 +199,32 @@ describe('securityService', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // getSystemStatus
+  // getSystemState
   // ---------------------------------------------------------------------------
-  describe('getSystemStatus', () => {
-    it('returns disarmed state and user count', () => {
+  describe('getSystemState', () => {
+    it('returns disarmed state initially', () => {
+      const { systemState } = getSystemState();
+      expect(systemState).toEqual({ armed: false, mode: null });
+    });
+
+    it('reflects armed state after arming', () => {
+      armSystem('home');
+      const { systemState } = getSystemState();
+      expect(systemState).toEqual({ armed: true, mode: 'home' });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // getUserCount
+  // ---------------------------------------------------------------------------
+  describe('getUserCount', () => {
+    it('returns 0 when there are no users', () => {
+      expect(getUserCount()).toBe(0);
+    });
+
+    it('returns correct count after adding users', () => {
       addUser('Alice', '1234');
-      const status = getSystemStatus();
-      expect(status.systemState).toEqual({ armed: false, mode: null });
-      expect(status.userCount).toBe(1);
+      expect(getUserCount()).toBe(1);
     });
   });
 
@@ -212,10 +235,11 @@ describe('securityService', () => {
     it('clears armed state and user list', () => {
       armSystem();
       addUser('Alice', '1234');
-      reset();
-      const status = getSystemStatus();
-      expect(status.systemState).toEqual({ armed: false, mode: null });
-      expect(status.userCount).toBe(0);
+      resetSystem();
+      resetUsers();
+      const { systemState } = getSystemState();
+      expect(systemState).toEqual({ armed: false, mode: null });
+      expect(getUserCount()).toBe(0);
     });
   });
 });

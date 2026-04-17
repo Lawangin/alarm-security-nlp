@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { HealthzData, NlResponse, HistoryEntry } from './types';
-import { executeCommand, fetchHealth } from './api/nlService';
+import { executeCommand, fetchHealth, setNlpStrategy } from './api/nlService';
 import { SystemStatus } from './components/SystemStatus';
 import { CommandInput } from './components/CommandInput';
 import { CommandResult } from './components/CommandResult';
@@ -20,6 +20,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [health, setHealth] = useState<HealthzData | null>(null);
+  const [strategyChanging, setStrategyChanging] = useState(false);
   const healthIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshHealth = useCallback(async () => {
@@ -69,6 +70,18 @@ export default function App() {
     }
   }, [text, loading, refreshHealth]);
 
+  const handleStrategyChange = useCallback(async (strategy: string) => {
+    setStrategyChanging(true);
+    try {
+      await setNlpStrategy(strategy);
+      await refreshHealth();
+    } catch {
+      // error displayed via health status
+    } finally {
+      setStrategyChanging(false);
+    }
+  }, [refreshHealth]);
+
   function handleRerun(cmd: string) {
     setText(cmd);
   }
@@ -80,7 +93,7 @@ export default function App() {
           <span className="app-icon">⬡</span>
           <span>Security Control</span>
         </div>
-        <SystemStatus data={health} />
+        <SystemStatus data={health} onStrategyChange={handleStrategyChange} strategyChanging={strategyChanging} />
       </header>
 
       <main className="app-main">

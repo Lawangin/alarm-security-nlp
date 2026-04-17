@@ -1,10 +1,10 @@
 import { vi, describe, it, expect } from 'vitest';
-import { Intent, type ParsedCommand } from '../types.js';
+import { Intent, type ParsedCommand } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // Config mock — sets CONFIDENCE_THRESHOLD to 0.85 (project default)
 // ---------------------------------------------------------------------------
-vi.mock('../config.js', () => ({
+vi.mock('../shared/config.js', () => ({
   config: {
     LLM_API_KEY: 'test-api-key',
     LLM_MODEL: 'claude-opus-4-6',

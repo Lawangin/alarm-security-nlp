@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app, setNlpStrategy } from '../app.js';
-import { reset } from '../services/securityService.js';
-import { Intent } from '../types.js';
+import { reset as resetSystem } from '../modules/system/system.service.js';
+import { reset as resetUsers } from '../modules/users/users.service.js';
+import { Intent } from '../shared/types.js';
 import type { NlpStrategy } from '../nlp/nlpStrategy.js';
-import type { ParsedCommand } from '../types.js';
+import type { ParsedCommand } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // Mock NLP strategy — keeps tests fast and deterministic
@@ -31,7 +32,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  reset();
+  resetSystem();
+  resetUsers();
   vi.clearAllMocks();
 });
 

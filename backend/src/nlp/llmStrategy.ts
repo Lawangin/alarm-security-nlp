@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Intent, type ArmMode, type ParsedCommand } from '../types.js';
+import { Intent, type ArmMode, type ParsedCommand } from '../shared/types.js';
 import type { NlpStrategy } from './nlpStrategy.js';
-import { config } from '../config.js';
+import { config } from '../shared/config.js';
+import { isNlpErrorIntent, throwForErrorIntent } from '../shared/commandErrors.js';
 
 // Stable system prompt — cached on first request, reused on subsequent calls
 const SYSTEM_PROMPT = `You are a security system command parser. Parse the user's natural language input and return ONLY a JSON object — no markdown, no explanation.
@@ -9,10 +10,14 @@ const SYSTEM_PROMPT = `You are a security system command parser. Parse the user'
 Intents:
 - ARM_SYSTEM: arm/activate/enable/lock the security system
 - DISARM_SYSTEM: disarm/deactivate/disable/turn off the security system
-- ADD_USER: add/create/grant access to a user
-- REMOVE_USER: remove/delete/revoke access for a user
+- ADD_USER: add/create/grant access to a user (name AND pin both present)
+- REMOVE_USER: remove/delete/revoke access for a user (name OR pin present)
 - LIST_USERS: list/show/display all users with access
 - UNKNOWN: intent cannot be determined
+- UNSUPPORTED_SCHEDULE: ADD_USER intent is clear but uses an iterative or non-contiguous day schedule that cannot be represented as a single time window
+- ADD_USER_MISSING_NAME: ADD_USER intent is clear but no name could be extracted
+- ADD_USER_MISSING_PIN: ADD_USER intent is clear but no PIN could be extracted
+- REMOVE_USER_MISSING_TARGET: REMOVE_USER intent is clear but neither a name nor a PIN could be extracted
 
 Entities (include only if present in the input):
 - mode: arm mode — "away", "home", or "stay" (ARM_SYSTEM only)
@@ -23,21 +28,44 @@ Entities (include only if present in the input):
 - permissions: array of strings, default ["arm", "disarm"]
 
 Time window rules:
-- Contiguous ranges like "from Monday to Friday" or "this weekend" → use startTime + endTime.
-- Non-contiguous day lists like "Tuesday and Thursday" or "Monday, Wednesday, Friday" are NOT supported. Return UNKNOWN for these.
+- Contiguous day-of-week ranges (e.g. "Monday to Thursday", "Monday through Friday") with no iterative language → interpret as the NEXT upcoming occurrence. Use the provided current date/time to resolve to absolute ISO 8601 datetimes.
+- If a time-of-day is given alongside the day range (e.g. "monday to thursday from 9am to 7pm"), use that time for startTime and endTime respectively.
+- If no time-of-day is given, default to 00:00 for startTime and 23:59 for endTime on the respective days.
+- Iterative / recurring language makes the schedule unsupported → return UNSUPPORTED_SCHEDULE. Signals include:
+  - Words: "every", "each", "repeat", "recurring", "weekly", "daily", "always"
+  - Plural day names: "mondays", "tuesdays", "wednesdays", "thursdays", "fridays", "saturdays", "sundays"
+- Non-contiguous day lists (days joined by "and" or commas without "to"/"through") are NOT supported → return UNSUPPORTED_SCHEDULE.
 
 Examples:
 Input: "arm the system in away mode"
 {"intent":"ARM_SYSTEM","confidence":0.99,"entities":{"mode":"away","permissions":["arm","disarm"]}}
 
 Input: "add user Sarah with pin 4321 from today 5pm to tomorrow 10am"
-{"intent":"ADD_USER","confidence":0.97,"entities":{"name":"Sarah","pin":"4321","startTime":"<ISO>","endTime":"<ISO>","permissions":["arm","disarm"]}}
+{"intent":"ADD_USER","confidence":0.97,"entities":{"name":"Sarah","pin":"4321","startTime":"<ISO today 5pm>","endTime":"<ISO tomorrow 10am>","permissions":["arm","disarm"]}}
 
 Input: "give Ted access from friday to monday with pin 3333"
-{"intent":"ADD_USER","confidence":0.97,"entities":{"name":"Ted","pin":"3333","startTime":"<ISO friday>","endTime":"<ISO monday>","permissions":["arm","disarm"]}}
+{"intent":"ADD_USER","confidence":0.97,"entities":{"name":"Ted","pin":"3333","startTime":"<ISO next friday 00:00>","endTime":"<ISO next monday 23:59>","permissions":["arm","disarm"]}}
+
+Input: "give jerry pin 1699 but he can only use it on monday to thursday from 9am to 7pm"
+{"intent":"ADD_USER","confidence":0.95,"entities":{"name":"jerry","pin":"1699","startTime":"<ISO next monday 09:00>","endTime":"<ISO next thursday 19:00>","permissions":["arm","disarm"]}}
+
+Input: "give access to Sarah with pin 4321 every monday to friday"
+{"intent":"UNSUPPORTED_SCHEDULE","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
+
+Input: "add user Sarah on mondays and wednesdays with pin 4321"
+{"intent":"UNSUPPORTED_SCHEDULE","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
 
 Input: "add user Sarah on Tuesday and Thursday with pin 4321"
-{"intent":"UNKNOWN","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
+{"intent":"UNSUPPORTED_SCHEDULE","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
+
+Input: "add a user with pin 4321"
+{"intent":"ADD_USER_MISSING_NAME","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
+
+Input: "add user Sarah"
+{"intent":"ADD_USER_MISSING_PIN","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
+
+Input: "remove someone"
+{"intent":"REMOVE_USER_MISSING_TARGET","confidence":0.0,"entities":{"permissions":["arm","disarm"]}}
 
 Input: "remove user John"
 {"intent":"REMOVE_USER","confidence":0.98,"entities":{"name":"John","permissions":["arm","disarm"]}}
@@ -128,9 +156,9 @@ export class LlmStrategy implements NlpStrategy {
   }
 
   private validateIntent(raw: unknown): Intent {
-    if (typeof raw === 'string' && (Object.values(Intent) as string[]).includes(raw)) {
-      return raw as Intent;
-    }
+    if (typeof raw !== 'string') return Intent.UNKNOWN;
+    if (isNlpErrorIntent(raw)) throwForErrorIntent(raw);
+    if ((Object.values(Intent) as string[]).includes(raw)) return raw as Intent;
     return Intent.UNKNOWN;
   }
 

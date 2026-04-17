@@ -38,6 +38,7 @@ export interface HealthzData {
   version: string;
   nlpStrategy: string;
   nlpReady: boolean;
+  llmAvailable: boolean;
   systemState: SystemState;
   userCount: number;
 }

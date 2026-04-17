@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { RuleBasedStrategy } from '../nlp/ruleBasedStrategy.js';
-import { Intent } from '../types.js';
+import { Intent } from '../shared/types.js';
 
 // Fix "now" for deterministic chrono-node time extraction.
 // Tuesday 2026-04-14 12:00:00 UTC

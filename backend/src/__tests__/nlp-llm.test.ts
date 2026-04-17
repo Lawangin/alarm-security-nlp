@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { Intent } from '../types.js';
+import { Intent } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // Mock @anthropic-ai/sdk before importing LlmStrategy
@@ -12,7 +12,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   })),
 }));
 
-vi.mock('../config.js', () => ({
+vi.mock('../shared/config.js', () => ({
   config: {
     LLM_API_KEY: 'test-api-key',
     LLM_MODEL: 'claude-opus-4-6',

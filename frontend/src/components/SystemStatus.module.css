@@ -52,3 +52,49 @@
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
 }
+
+.strategySelector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.strategyBtn {
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.strategyBtn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.strategyBtn:disabled {
+  cursor: default;
+}
+
+.strategyActive {
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.strategyUnavailable {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+}
+
+.strategyStatus {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  font-size: 0.78rem;
+  margin-left: 0.25rem;
+}
