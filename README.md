@@ -19,6 +19,10 @@ docker compose up --build
 cp .env.example .env          # paste the provided LLM_API_KEY value
 docker compose up --build
 
+# Wait until you see both of these lines in the output before testing:
+#   backend   | ... "msg":"backend listening"
+#   frontend  | [notice] start worker process ...
+
 # Verify it's healthy
 curl http://localhost:8080/healthz
 
@@ -376,6 +380,7 @@ The hybrid strategy is the most honest architectural answer to this tradeoff: ru
 - **Scheduled arming/disarming** — Natural language commands like _"arm the system at 11pm every night"_ or _"disarm automatically at 7am on weekdays"_ mapped to a cron-style job scheduler. The NLP layer already understands temporal expressions; the missing piece is a persistent job store and a scheduler (e.g. `node-cron`) to execute them.
 - **Recurring access schedules** — Cron-style access windows (_"every weekday 9–5"_, _"every other weekend"_) instead of only contiguous date ranges. Currently rejected with a clear error; the data model and NLP would both need extending.
 - **Bulk user operations** — Commands like _"add users Alice with PIN 1234, Bob with PIN 5678, and Carol with PIN 9012"_ or _"remove all temporary users"_. Would require the NLP layer to return a list of parsed entities rather than a single user per command, and the API to accept arrays.
+- **User updates** — Commands like _"change Sarah's PIN to 9999"_, _"extend John's access until Friday"_, or _"update Mike's permissions to arm only"_. Needs a `PATCH /api/update-user` endpoint, a new `UPDATE_USER` intent, and entity extraction for the specific field being changed alongside the new value.
 - **Zones and sensors** — Arm/disarm individual zones (_"arm just the front door"_, _"disable motion sensor in the garage"_) rather than the whole system. Needs a zone model and zone-aware intents.
 - **Access level permissions** — Distinguish between _arm-only_, _disarm-only_, and _full access_ users rather than defaulting everyone to both. The `permissions` field is already modelled; the NLP just needs training on the phrasing.
 - **Audit log** — Immutable log of every command, parsed intent, and outcome with timestamps and correlation IDs, queryable through the UI.
