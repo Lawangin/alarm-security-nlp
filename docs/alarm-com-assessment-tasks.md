@@ -301,19 +301,3 @@
 - [ ] Clean up: remove dead code, console.logs, TODOs
 - [ ] Push to public GitHub repo
 
----
-
-### Priority Order Summary
-
-| Priority | Phase | Effort | Why |
-|----------|-------|--------|-----|
-| 🔴 P0 | Phase 1 — Scaffolding & Docker | 20 min | Nothing works without this |
-| 🔴 P0 | Phase 2 — Config & Middleware | 20 min | Foundation for everything |
-| 🔴 P0 | Phase 3 — Domain Layer | 15 min | Core business logic |
-| 🔴 P0 | Phase 4 — REST API | 15 min | Required endpoints |
-| 🔴 P0 | Phase 5 — Rule-Based NLP | 25 min | The hard differentiator |
-| 🔴 P0 | Phase 6 — NL Execute & Router | 15 min | Connects NLP to API |
-| 🟡 P1 | Phase 7 — Tests | 25 min | Proves correctness |
-| 🟡 P1 | Phase 8 — Frontend | 20 min | Required but keep minimal |
-| 🟢 P2 | Phase 9 — LLM & Hybrid | 25 min | Bonus points territory |
-| 🟢 P2 | Phase 10 — Docs & Polish | 15 min | First and last impression |

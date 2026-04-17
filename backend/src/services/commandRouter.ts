@@ -12,9 +12,23 @@ const EXAMPLE_COMMANDS = [
   '"arm in stay mode"',
   '"disarm the system"',
   '"add user Sarah with PIN 4321"',
+  '"add user Sarah with PIN 4321 from Monday to Friday"',
   '"remove user Sarah"',
   '"list users"',
 ];
+
+const DAY_NAMES = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi;
+const RANGE_PATTERN = /\bfrom\s+\w.*?\bto\b/i;
+
+/**
+ * Returns true when the text mentions 2+ individual day names without a
+ * "from … to" range connector — i.e. a non-contiguous schedule like
+ * "Tuesday and Thursday" or "Monday, Wednesday, Friday".
+ */
+function hasNonContiguousDaySeries(text: string): boolean {
+  const days = text.match(DAY_NAMES) ?? [];
+  return days.length >= 2 && !RANGE_PATTERN.test(text);
+}
 
 export function routeCommand(parsed: ParsedCommand): RouterResult {
   const { intent, entities } = parsed;
@@ -32,6 +46,14 @@ export function routeCommand(parsed: ParsedCommand): RouterResult {
     }
 
     case Intent.ADD_USER: {
+      if (hasNonContiguousDaySeries(parsed.rawText)) {
+        throw new AppError(
+          422,
+          'UNSUPPORTED_SCHEDULE',
+          'Non-contiguous day schedules (e.g. "Tuesday and Thursday") are not supported. ' +
+          'Please use a date range instead — e.g. "add user Sarah with PIN 4321 from Monday to Friday".',
+        );
+      }
       if (!entities.name) {
         throw new AppError(422, 'MISSING_ENTITY', 'Could not extract a user name from your command. Try: "add user Sarah with PIN 4321"');
       }

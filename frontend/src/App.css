@@ -1,26 +1,60 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   color: #fff;
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  background-image: linear-gradient(to bottom, #020917, #101725);
-}
-
-.content {
-  display: flex;
+  background: #0b1120;
   min-height: 100vh;
-  line-height: 1.1;
-  text-align: center;
+}
+
+.app {
+  display: flex;
   flex-direction: column;
-  justify-content: center;
+  min-height: 100vh;
 }
 
-.content h1 {
-  font-size: 3.6rem;
+/* ── Header ─────────────────────────────────────────────── */
+
+.app-header {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem 0.75rem;
+  font-size: 1.1rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.content p {
-  font-size: 1.2rem;
-  font-weight: 400;
-  opacity: 0.5;
+.app-icon {
+  font-size: 1.3rem;
+  color: #3b82f6;
+}
+
+/* ── Main ────────────────────────────────────────────────── */
+
+.app-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.app-content {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }

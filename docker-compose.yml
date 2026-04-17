@@ -9,16 +9,15 @@ services:
       - NODE_ENV=production
       - PORT=8080
       - LOG_LEVEL=info
-      - NLP_STRATEGY=rule-based
+      - NLP_STRATEGY=${NLP_STRATEGY:-hybrid}
       - CORS_ORIGIN=http://localhost:3000
-      # LLM settings (uncomment for Phase 9)
-      # - NLP_STRATEGY=hybrid
-      # - LLM_API_KEY=your-key-here
-      # - LLM_MODEL=claude-sonnet-4-6
-      # - CONFIDENCE_THRESHOLD=0.85
+      # LLM settings — set these in a .env file at the repo root (never commit the key)
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-claude-haiku-4-5}
+      - CONFIDENCE_THRESHOLD=${CONFIDENCE_THRESHOLD:-0.85}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
-      interval: 15s
+      interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s

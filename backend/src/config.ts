@@ -7,7 +7,7 @@ const configSchema = z.object({
   NLP_STRATEGY: z.enum(['rule-based', 'llm', 'hybrid']).default('rule-based'),
   CORS_ORIGIN: z.string().default('*'),
   LLM_API_KEY: z.string().optional(),
-  LLM_MODEL: z.string().default('claude-sonnet-4-6'),
+  LLM_MODEL: z.string().default('claude-haiku-4-5'),
   CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.85),
 });
 

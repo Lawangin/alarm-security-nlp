@@ -49,6 +49,15 @@ export class RuleBasedStrategy implements NlpStrategy {
     n.addDocument('en', 'arm stay', Intent.ARM_SYSTEM);
     n.addDocument('en', 'set the alarm', Intent.ARM_SYSTEM);
     n.addDocument('en', 'activate security system', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'put the system in home mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'put the system in away mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'put the system in stay mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'put it in home mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'set the system to home mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'set the system to away mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'switch to home mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'switch to away mode', Intent.ARM_SYSTEM);
+    n.addDocument('en', 'switch to stay mode', Intent.ARM_SYSTEM);
 
     // DISARM_SYSTEM
     n.addDocument('en', 'disarm the system', Intent.DISARM_SYSTEM);
@@ -67,11 +76,16 @@ export class RuleBasedStrategy implements NlpStrategy {
     n.addDocument('en', 'create user', Intent.ADD_USER);
     n.addDocument('en', 'add a temporary user', Intent.ADD_USER);
     n.addDocument('en', 'give access to', Intent.ADD_USER);
+    n.addDocument('en', 'give john access', Intent.ADD_USER);
+    n.addDocument('en', 'grant alice access', Intent.ADD_USER);
     n.addDocument('en', 'make sure she can arm and disarm', Intent.ADD_USER);
     n.addDocument('en', 'add a new user', Intent.ADD_USER);
     n.addDocument('en', 'create a new user', Intent.ADD_USER);
     n.addDocument('en', 'grant access to', Intent.ADD_USER);
     n.addDocument('en', 'add temp user', Intent.ADD_USER);
+    n.addDocument('en', 'add john with pin', Intent.ADD_USER);
+    n.addDocument('en', 'add sarah with the pin', Intent.ADD_USER);
+    n.addDocument('en', 'add bob as an authorized user', Intent.ADD_USER);
 
     // REMOVE_USER
     n.addDocument('en', 'remove user', Intent.REMOVE_USER);
@@ -84,13 +98,19 @@ export class RuleBasedStrategy implements NlpStrategy {
     n.addDocument('en', 'take away access from user', Intent.REMOVE_USER);
 
     // LIST_USERS
-    n.addDocument('en', 'show me all users', Intent.LIST_USERS);
+    n.addDocument('en', 'show all users', Intent.LIST_USERS);
     n.addDocument('en', 'list users', Intent.LIST_USERS);
     n.addDocument('en', 'who has access', Intent.LIST_USERS);
     n.addDocument('en', 'list all users', Intent.LIST_USERS);
     n.addDocument('en', 'show users', Intent.LIST_USERS);
     n.addDocument('en', 'who can arm the system', Intent.LIST_USERS);
-    n.addDocument('en', 'show all users', Intent.LIST_USERS);
+    n.addDocument('en', 'list all the users on the system', Intent.LIST_USERS);
+    n.addDocument('en', 'show all the users on the system', Intent.LIST_USERS);
+    n.addDocument('en', 'show all users on the system', Intent.LIST_USERS);
+    n.addDocument('en', 'who is on the system', Intent.LIST_USERS);
+    n.addDocument('en', 'who are the users', Intent.LIST_USERS);
+    n.addDocument('en', 'get all users', Intent.LIST_USERS);
+    n.addDocument('en', 'display all users', Intent.LIST_USERS);
   }
 
   async initialize(): Promise<void> {
@@ -103,7 +123,14 @@ export class RuleBasedStrategy implements NlpStrategy {
   }
 
   async parse(text: string): Promise<ParsedCommand> {
-    const result = await this.nlp.process('en', text);
+    // Strip polite filler for both classification and entity extraction.
+    // rawText preserves the original for logging.
+    const normalized = this.normalizeText(text);
+
+    // For classification only: also remove digits and temporal phrases that add
+    // noise without carrying intent signal (e.g. "123456", "just for today").
+    const forClassification = this.stripForClassification(normalized);
+    const result = await this.nlp.process('en', forClassification);
 
     const intent =
       result.score >= INTENT_CONFIDENCE_THRESHOLD
@@ -116,15 +143,39 @@ export class RuleBasedStrategy implements NlpStrategy {
       intent,
       confidence,
       entities: {
-        mode: this.extractMode(text),
-        name: this.extractName(text),
-        pin: this.extractPin(text),
+        mode: this.extractMode(normalized),
+        name: this.extractName(normalized),
+        pin: this.extractPin(normalized),
         permissions: ['arm', 'disarm'],
-        ...this.extractTimes(text),
+        ...this.extractTimes(normalized),
       },
       rawText: text,
       source: 'rule-based',
     };
+  }
+
+  /**
+   * Strips leading/trailing polite filler that confuses the classifier.
+   * e.g. "Can you arm the system please" → "arm the system"
+   */
+  private normalizeText(text: string): string {
+    return text
+      .replace(/^(can you|could you|would you|please|i'd like to|i would like to)\s+/i, '')
+      .replace(/\s+(please|thanks|thank you)[.!?]?$/i, '')
+      .trim();
+  }
+
+  /**
+   * Further strips content that carries no intent signal before classification:
+   * digit sequences (PINs, codes) and temporal phrases (dates, "just for today").
+   * Entity extractors always run on the normalized text, not this stripped version.
+   */
+  private stripForClassification(text: string): string {
+    return text
+      .replace(/\b\d+\b/g, '')                          // remove all digit sequences
+      .replace(/\b(just\s+)?for\s+(today|tomorrow|this|next|the\s+day)\b.*$/i, '') // trailing time context
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   private mapIntent(nlpIntent: string): Intent {
@@ -156,6 +207,12 @@ export class RuleBasedStrategy implements NlpStrategy {
     const stopWords = new Set([
       'with', 'pin', 'from', 'to', 'at', 'the', 'a', 'an', 'temp', 'temporary',
       'new', 'please', 'user', 'access', 'system',
+      // prepositions / articles that appear near time expressions
+      'for', 'just', 'as', 'only',
+      // temporal words that follow "for" and could be mistaken for names
+      'today', 'tomorrow', 'this', 'next', 'weekend', 'weekday', 'weekdays',
+      // common filler
+      'authorized', 'temporary',
     ]);
 
     const tryExtract = (match: RegExpMatchArray | null): string | undefined => {
@@ -164,20 +221,44 @@ export class RuleBasedStrategy implements NlpStrategy {
       return stopWords.has(candidate.toLowerCase()) ? undefined : candidate;
     };
 
-    // "user [Name]" — e.g. "add user John", "remove user Alice"
+    // 1. "user [Name]" — most explicit signal: "add user John", "remove user Alice"
     const userMatch = text.match(/\buser\s+([A-Za-z][a-zA-Z]*)\b/i);
     const fromUser = tryExtract(userMatch);
     if (fromUser) return fromUser;
 
-    // "access to/for [Name]" — e.g. "give access to Alice"
-    const accessMatch = text.match(/\b(?:access\s+to|access\s+for|for)\s+([A-Za-z][a-zA-Z]*)\b/i);
+    // 2. "add/create [Name]" — name directly after verb, no "user" keyword
+    //    e.g. "add Samsoor with pin", "add Lawangin as an authorized user"
+    const addMatch = text.match(/\b(?:add|create)\s+([A-Za-z][a-zA-Z]*)\b/i);
+    const fromAdd = tryExtract(addMatch);
+    if (fromAdd) return fromAdd;
+
+    // 3. "give/grant [Name] access" — name sits between verb and "access"
+    //    e.g. "Give Ted access from friday to monday", "grant Alice access"
+    const giveMatch = text.match(/\b(?:give|grant)\s+([A-Za-z][a-zA-Z]*)\s+access\b/i);
+    const fromGive = tryExtract(giveMatch);
+    if (fromGive) return fromGive;
+
+    // 3b. "access to/for [Name]" — bare "for" removed to avoid "for today", "for weekend"
+    const accessMatch = text.match(/\b(?:access\s+to|access\s+for)\s+([A-Za-z][a-zA-Z]*)\b/i);
     const fromAccess = tryExtract(accessMatch);
     if (fromAccess) return fromAccess;
 
-    // "remove/delete [Name]" — e.g. "remove Alice from the system", "delete Bob"
-    const removeMatch = text.match(/\b(?:remove|delete)\s+([A-Za-z][a-zA-Z]*)\b/i);
+    // 4. "remove/delete/take [Name]" — possessive-aware:
+    //    "take bilys access" → "bily", "take bily's access" → "bily"
+    //    "remove Alice from the system" → "Alice"
+    //    Uses a lazy quantifier so the optional possessive suffix is stripped before
+    //    the surrounding context words ("access", "away", "from", "pin").
+    const removeMatch = text.match(
+      /\b(?:remove|delete|take)\s+([A-Za-z][a-zA-Z]*?)(?:'?s)?\s+(?:access|away|from|pin)\b/i,
+    );
     const fromRemove = tryExtract(removeMatch);
     if (fromRemove) return fromRemove;
+
+    // 4b. Fallback: plain "remove/delete [Name]" without a following context word
+    //     e.g. "delete Alice", "remove Bob"
+    const removePlainMatch = text.match(/\b(?:remove|delete|take)\s+([A-Za-z][a-zA-Z]*)\b/i);
+    const fromRemovePlain = tryExtract(removePlainMatch);
+    if (fromRemovePlain) return fromRemovePlain;
 
     return undefined;
   }
@@ -233,7 +314,41 @@ export class RuleBasedStrategy implements NlpStrategy {
       return this.fullDayRange(startDate);
     }
 
+    // Duration phrase: "for a month", "for 2 weeks", "for a whole year", etc.
+    const duration = this.extractDuration(text);
+    if (duration) {
+      const endDate = this.applyDuration(startDate, duration.n, duration.unit);
+      return { startTime: startDate.toISOString(), endTime: endDate.toISOString() };
+    }
+
     return { startTime: startDate.toISOString() };
+  }
+
+  /**
+   * Matches "for [a/an/N] [whole] [hour|day|week|month|year][s]"
+   * e.g. "for a whole month", "for 2 weeks", "for an hour", "for 3 days"
+   */
+  private extractDuration(text: string): { n: number; unit: string } | undefined {
+    const match = text.match(
+      /\bfor\s+(?:a\s+whole\s+|the\s+(?:next|following)\s+)?(\d+|a|an)\s+(hour|day|week|month|year)s?\b/i,
+    );
+    if (!match) return undefined;
+    const rawN = match[1].toLowerCase();
+    const n = rawN === 'a' || rawN === 'an' ? 1 : parseInt(rawN, 10);
+    return { n, unit: match[2].toLowerCase() };
+  }
+
+  /** Adds a parsed duration to a date, using calendar-correct month/year arithmetic. */
+  private applyDuration(start: Date, n: number, unit: string): Date {
+    const end = new Date(start);
+    switch (unit) {
+      case 'hour':  end.setHours(end.getHours() + n);       break;
+      case 'day':   end.setDate(end.getDate() + n);          break;
+      case 'week':  end.setDate(end.getDate() + n * 7);      break;
+      case 'month': end.setMonth(end.getMonth() + n);        break;
+      case 'year':  end.setFullYear(end.getFullYear() + n);  break;
+    }
+    return end;
   }
 
   /** Saturday 00:00 → Sunday 23:59:59 */
